@@ -2,10 +2,11 @@
 
 from datetime import datetime
 from typing import Optional, TYPE_CHECKING
-if TYPE_CHECKING:
-    from app.metrics.base import _InputType
 
 from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    from app.metrics.base import _InputType
 
 
 class User(BaseModel):
