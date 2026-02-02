@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome - Metrics Tracker{% endblock %}
+
+{% block content %}
+<div class="welcome-section">
+    <h2>Welcome Back! 👋</h2>
+    <p class="subtitle">Select your profile to get started</p>
+</div>
+
+<div class="user-grid">
+    {% if users %}
+        {% for user in users %}
+        <a href="{{ url_for('user_dashboard', user_id=user.id) }}" class="user-card">
+            <div class="user-avatar">{{ user.name[0].upper() }}</div>
+            <h3>{{ user.name }}</h3>
+        </a>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <p>No users yet. Create one to get started!</p>
+        </div>
+    {% endif %}
+    
+    <a href="{{ url_for('new_user') }}" class="user-card user-card-new">
+        <div class="user-avatar">+</div>
+        <h3>New User</h3>
+    </a>
+</div>
+
+<div class="info-section">
+    <h3>Quick & Easy Daily Tracking</h3>
+    <ul class="feature-list">
+        <li>✨ Takes 15-30 seconds max</li>
+        <li>🎯 No guilt, no streaks - just observe your patterns</li>
+        <li>📊 See trends over time without pressure</li>
+        <li>🔧 Customize which metrics you track</li>
+    </ul>
+</div>
+{% endblock %}
