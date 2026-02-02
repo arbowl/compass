@@ -1,25 +1,25 @@
 """Base models for the LLM layer"""
 
 from abc import ABC, abstractmethod
-from enum import Enum, auto
+from enum import StrEnum
 from typing import Any, Optional
 
 
 from pydantic import BaseModel
 
 
-class _Role(Enum):
+class Role(StrEnum):
     """LLM role"""
 
-    SYSTEM = auto()
-    USER = auto()
-    ASSISTANT = auto()
+    SYSTEM = "system"
+    USER = "user"
+    ASSISTANT = "assistant"
 
 
 class LlmMessage(BaseModel):
     """A single message in an LLM conversation"""
 
-    role: _Role
+    role: Role
     content: str
 
 
@@ -48,7 +48,7 @@ class TrendAnalysisRequest(BaseModel):
 
 class LlmInterface(ABC):
     """Abstract base class for LLM providers.
-    
+
     This allows swapping out Ollama for OpenAI, Anthropic, or any other
     LLM provider without changing the rest of the application.
     """

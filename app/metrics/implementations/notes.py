@@ -3,18 +3,17 @@
 Freeform text notes for seeding LLM prompts.
 """
 
-from datetime import datetime, timedelta
 from typing import Any, Optional
 
-from app.metrics.base import (
-    MetricBase,
-    MetricInputSchema,
-    MetricEntry,
-    MetricTrendData,
-    MetricAggregate,
-    _InputType,
-)
 from app.data import Database, MetricEntryRepository
+from app.metrics.base import (
+    InputType,
+    MetricAggregate,
+    MetricBase,
+    MetricEntry,
+    MetricInputSchema,
+    MetricTrendData,
+)
 
 
 class NotesMetric(MetricBase):
@@ -45,7 +44,7 @@ class NotesMetric(MetricBase):
 
     def input_schema(self):
         return MetricInputSchema(
-            input_type=_InputType.TEXT,
+            input_type=InputType.TEXT,
             label="Any extra notes?",
             required=False,
             placeholder="How are you feeling? Any observations?"
@@ -55,15 +54,15 @@ class NotesMetric(MetricBase):
         """Notes are always valid (even empty strings)"""
         return True
 
-    def record(self, user_id, value, timestamp = None):
+    def record(self, user_id, value, timestamp=None):
         note_text = str(value) if value else ""
         if not note_text.strip():
             note_text = ""
-        db_entry = self.entry_repo.create(
+        db_entry = self.entry_repo.create_or_update(
             user_id=user_id,
             metric_name=self.name,
             value=note_text,
-            value_type=_InputType.TEXT,
+            value_type=InputType.TEXT,
             timestamp=timestamp,
         )
         return MetricEntry(
@@ -150,7 +149,7 @@ class NotesMetric(MetricBase):
             }
         )
 
-    def llm_prompt(self, user_id, context = None) -> Optional[str]:
+    def llm_prompt(self, user_id, context=None) -> Optional[str]:
         """Generate LLM prompt for notes analysis."""
         entries = self.entry_repo.get_for_user(
             user_id=user_id,

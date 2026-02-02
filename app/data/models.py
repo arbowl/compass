@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from app.metrics.base import _InputType
+from app.metrics.base import InputType
 
 
 class User(BaseModel):
@@ -44,7 +44,7 @@ class MetricEntryDb(BaseModel):
     user_id: int
     metric_name: str
     timestamp: datetime
-    value_type: _InputType
+    value_type: InputType
     value_boolean: Optional[bool] = None
     value_integer: Optional[int] = None
     value_decimal: Optional[float] = None
@@ -56,12 +56,12 @@ class MetricEntryDb(BaseModel):
 
     def get_value(self) -> Optional[object]:
         """Retrieve the value in its appropriate type based on value_type"""
-        if self.value_type == _InputType.BOOLEAN:
+        if self.value_type == InputType.BOOLEAN:
             return self.value_boolean
-        elif self.value_type == _InputType.INTEGER:
+        elif self.value_type == InputType.INTEGER:
             return self.value_integer
-        elif self.value_type == _InputType.DECIMAL:
+        elif self.value_type == InputType.DECIMAL:
             return self.value_decimal
-        elif self.value_type == _InputType.TEXT:
+        elif self.value_type == InputType.TEXT:
             return self.value_text
         return None

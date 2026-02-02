@@ -5,14 +5,24 @@ with the global registry.
 """
 
 from app.data import Database
-from app.metrics.registry import REGISTRY
+from app.metrics.implementations.alone import AloneTimeMetric
+from app.metrics.implementations.exercise import ExerciseMetric
+from app.metrics.implementations.groceries import GroceriesMetric
+from app.metrics.implementations.mood import MoodMetric
 from app.metrics.implementations.notes import NotesMetric
+from app.metrics.implementations.scale import ScaleMetric
+from app.metrics.registry import REGISTRY
 
 
 def register_all_metrics(db: Database) -> None:
     """Register all available metric implementations."""
     metrics = [
-        NotesMetric(db)
+        NotesMetric(db),
+        GroceriesMetric(db),
+        ScaleMetric(db),
+        ExerciseMetric(db),
+        AloneTimeMetric(db),
+        MoodMetric(db),
     ]
     for metric in metrics:
         REGISTRY._instances[metric.name] = metric
@@ -21,5 +31,10 @@ def register_all_metrics(db: Database) -> None:
 
 __all__ = [
     "NotesMetric",
+    "GroceriesMetric",
+    "ScaleMetric",
+    "ExerciseMetric",
+    "AloneTimeMetric",
+    "MoodMetric",
     "register_all_metrics"
 ]

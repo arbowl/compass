@@ -8,7 +8,7 @@ from typing import Any, Optional
 from pydantic import BaseModel
 
 
-class _InputType(StrEnum):
+class InputType(StrEnum):
     """Types of inputs for UI fields"""
 
     BOOLEAN = "boolean"
@@ -23,7 +23,7 @@ class MetricInputSchema(BaseModel):
     the input field.
     """
 
-    input_type: _InputType
+    input_type: InputType
     label: str
     required: bool = False
     options: Optional[list[str]] = None  # For SELECT type

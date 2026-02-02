@@ -8,6 +8,18 @@
     <p class="subtitle">Quick check-in for {{ "today" }}</p>
 </div>
 
+{% if daily_message %}
+<div class="llm-message">
+    <div class="llm-icon">🤖</div>
+    <p>{{ daily_message }}</p>
+</div>
+{% elif llm_available == False %}
+<div class="llm-message llm-unavailable">
+    <div class="llm-icon">💤</div>
+    <p>LLM insights are not available.</p>
+</div>
+{% endif %}
+
 <form method="POST" action="{{ url_for('submit_entries', user_id=user.id) }}" class="metrics-form">
     {% if metrics %}
         <div class="metrics-grid">
@@ -89,11 +101,14 @@
                     >
                         <option value="">Choose...</option>
                         {% for option in schema.options %}
-                        <option value="{{ loop.index }}" {% if current_value == loop.index %}selected{% endif %}>
+                        <option value="{{ option }}" {% if current_value == option %}selected{% endif %}>
                             {{ option }}
                         </option>
                         {% endfor %}
                     </select>
+                    {% if current_value is not none %}
+                        <small class="already-logged">✓ Already logged today: {{ current_value }}</small>
+                    {% endif %}
                 
                 {% endif %}
             </div>

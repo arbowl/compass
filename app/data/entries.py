@@ -6,7 +6,7 @@ import json
 
 from app.data.database import Database
 from app.data.models import MetricEntryDb
-from app.metrics.base import _InputType
+from app.metrics.base import InputType
 
 
 class MetricEntryRepository:
@@ -15,12 +15,87 @@ class MetricEntryRepository:
     def __init__(self, db: Database) -> None:
         self.db = db
 
+    def get_for_date(
+        self,
+        user_id: int,
+        metric_name: str,
+        date: datetime
+    ) -> Optional[MetricEntryDb]:
+        """Get entry for a specific date (ignoring time)."""
+        start_of_day = date.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_day = date.replace(
+            hour=23, minute=59, second=59, microsecond=999999
+        )
+        row = self.db.execute_one(
+            """
+            SELECT * FROM metric_entries
+            WHERE user_id = ? AND metric_name = ?
+            AND timestamp >= ? AND timestamp <= ?
+            ORDER BY timestamp DESC
+            LIMIT 1
+            """,
+            (user_id, metric_name, start_of_day, end_of_day)
+        )
+        return MetricEntryDb(**row) if row else None
+
+    def update(
+        self,
+        entry_id: int,
+        value: Any,
+        value_type: InputType,
+        timestamp: Optional[datetime] = None,
+        metadata: Optional[dict[str, Any]] = None
+    ) -> MetricEntryDb:
+        """Update an existing metric entry"""
+        value_boolean = None
+        value_integer = None
+        value_decimal = None
+        value_text = None
+        if value_type == InputType.BOOLEAN:
+            value_boolean = bool(value)
+        elif value_type == InputType.INTEGER:
+            value_integer = int(value)
+        elif value_type == InputType.DECIMAL:
+            value_decimal = float(value)
+        elif value_type == InputType.TEXT:
+            value_text = str(value)
+        metadata_json = json.dumps(metadata) if metadata else None
+        update_parts = [
+            "value_type = ?",
+            "value_boolean = ?",
+            "value_integer = ?",
+            "value_decimal = ?",
+            "value_text = ?",
+            "metadata = ?"
+        ]
+        params = [
+            value_type,
+            value_boolean,
+            value_integer,
+            value_decimal,
+            value_text,
+            metadata_json
+        ]
+        if timestamp is not None:
+            update_parts.append("timestamp = ?")
+            params.append(timestamp)
+        params.append(entry_id)
+        self.db.execute(
+            f"""
+            UPDATE metric_entries
+            SET {', '.join(update_parts)}
+            WHERE id = ?
+            """,
+            tuple(params)
+        )
+        return self.get_by_id(entry_id)
+
     def create(
         self,
         user_id: int,
         metric_name: str,
         value: Any,
-        value_type: _InputType,
+        value_type: InputType,
         timestamp: Optional[datetime] = None,
         metadata: Optional[dict[str, Any]] = None
     ) -> MetricEntryDb:
@@ -31,27 +106,59 @@ class MetricEntryRepository:
         value_integer = None
         value_decimal = None
         value_text = None
-        if value_type == _InputType.BOOLEAN:
+        if value_type == InputType.BOOLEAN:
             value_boolean = bool(value)
-        elif value_type == _InputType.INTEGER:
+        elif value_type == InputType.INTEGER:
             value_integer = int(value)
-        elif value_type == _InputType.DECIMAL:
+        elif value_type == InputType.DECIMAL:
             value_decimal = float(value)
-        elif value_type == _InputType.TEXT:
+        elif value_type == InputType.TEXT:
             value_text = str(value)
         metadata_json = json.dumps(metadata) if metadata else None
         entry_id = self.db.execute_insert(
             """
-            INSERT INTO metric_entries 
-            (user_id, metric_name, timestamp, value_type, 
+            INSERT INTO metric_entries
+            (user_id, metric_name, timestamp, value_type,
              value_boolean, value_integer, value_decimal, value_text, metadata)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (user_id, metric_name, timestamp, value_type,
-             value_boolean, value_integer, value_decimal, value_text, metadata_json)
+             value_boolean, value_integer, value_decimal, value_text,
+             metadata_json)
         )
         return self.get_by_id(entry_id)
-    
+
+    def create_or_update(
+        self,
+        user_id: int,
+        metric_name: str,
+        value: Any,
+        value_type: InputType,
+        timestamp: Optional[datetime] = None,
+        metadata: Optional[dict[str, Any]] = None
+    ) -> MetricEntryDb:
+        """Create a new entry or update existing entry for the same day"""
+        if timestamp is None:
+            timestamp = datetime.now()
+        existing = self.get_for_date(user_id, metric_name, timestamp)
+        if existing:
+            return self.update(
+                existing.id,
+                value,
+                value_type,
+                timestamp,
+                metadata
+            )
+        else:
+            return self.create(
+                user_id,
+                metric_name,
+                value,
+                value_type,
+                timestamp,
+                metadata
+            )
+
     def get_by_id(self, entry_id: int) -> Optional[MetricEntryDb]:
         """Get a metric entry by ID."""
         row = self.db.execute_one(
@@ -59,7 +166,7 @@ class MetricEntryRepository:
             (entry_id,)
         )
         return MetricEntryDb(**row) if row else None
-    
+
     def get_for_user(
         self,
         user_id: int,
@@ -85,13 +192,13 @@ class MetricEntryRepository:
             conditions.append("timestamp <= ?")
             params.append(end_date)
         query = f"""
-            SELECT * FROM metric_entries 
+            SELECT * FROM metric_entries
             WHERE {' AND '.join(conditions)}
             ORDER BY timestamp DESC
         """
         rows = self.db.execute(query, tuple(params))
         return [MetricEntryDb(**row) for row in rows]
-    
+
     def get_latest_for_metric(
         self,
         user_id: int,
@@ -109,7 +216,7 @@ class MetricEntryRepository:
             (user_id, metric_name, limit)
         )
         return [MetricEntryDb(**row) for row in rows]
-    
+
     def get_date_range_stats(
         self,
         user_id: int,
@@ -120,7 +227,7 @@ class MetricEntryRepository:
         cutoff = datetime.now() - timedelta(days=days)
         row = self.db.execute_one(
             """
-            SELECT 
+            SELECT
                 COUNT(*) as count,
                 MIN(timestamp) as first_date,
                 MAX(timestamp) as last_date
@@ -129,8 +236,12 @@ class MetricEntryRepository:
             """,
             (user_id, metric_name, cutoff)
         )
-        return row if row else {'count': 0, 'first_date': None, 'last_date': None}
-    
+        return row if row else {
+            'count': 0,
+            'first_date': None,
+            'last_date': None,
+        }
+
     def delete(self, entry_id: int) -> bool:
         """Delete a metric entry."""
         self.db.execute(
@@ -138,13 +249,16 @@ class MetricEntryRepository:
             (entry_id,)
         )
         return True
-    
+
     def delete_for_user(
         self, user_id: int, metric_name: Optional[str] = None
     ) -> int:
         """Delete all entries for a user, optionally filtered by metric."""
         if metric_name:
-            query = "DELETE FROM metric_entries WHERE user_id = ? AND metric_name = ?"
+            query = (
+                "DELETE FROM metric_entries "
+                "WHERE user_id = ? AND metric_name = ?"
+            )
             params = (user_id, metric_name)
         else:
             query = "DELETE FROM metric_entries WHERE user_id = ?"

@@ -16,6 +16,7 @@ from app.config import load_config
 from app.data import Database, UserRepository, MetricEntryRepository
 from app.metrics.registry import REGISTRY
 from app.metrics.implementations import register_all_metrics
+from app.llm.ollama import OllamaLlm, DailySummaryRequest, LlmMessage, Role
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key-change-in-production"
@@ -27,6 +28,11 @@ db.initialize()
 user_repo = UserRepository(db)
 entry_repo = MetricEntryRepository(db)
 register_all_metrics(db)
+llm = OllamaLlm(
+    host=config.llm.ollama_host,
+    model=config.llm.ollama_model,
+    timeout=config.llm.timeout_seconds,
+)
 
 
 @app.route("/")
@@ -50,16 +56,45 @@ def user_dashboard(user_id):
     enabled_metrics = REGISTRY.get_enabled(enabled_metric_names)
     today_entries = {}
     for metric in enabled_metrics:
-        latest = entry_repo.get_latest_for_metric(user_id, metric.name, limit=1)
+        latest = entry_repo.get_latest_for_metric(
+            user_id,
+            metric.name,
+            limit=1,
+        )
         if latest:
             latest_entry = latest[0]
             if latest_entry.timestamp.date() == datetime.now().date():
                 today_entries[metric.name] = latest_entry.get_value()
+    daily_message = None
+    if llm.is_available():
+        try:
+            metrics_data = {}
+            for metric in enabled_metrics:
+                try:
+                    agg = metric.get_aggregates(user_id, days=7)
+                    metrics_data[metric.name] = {
+                        "summary": agg.summary,
+                        "stats": agg.stats,
+                    }
+                except Exception:
+                    pass
+            if metrics_data:
+                summary_request = DailySummaryRequest(
+                    user_id=user_id,
+                    metrics_data=metrics_data,
+                )
+                response = llm.generate_daily_summary(summary_request)
+                if response.content and "error" not in response.metadata:
+                    daily_message = response.content.strip()
+        except Exception as e:
+            print(f"Error generating daily summary: {e}")
     return render_template(
         "dashboard.html",
         user=user,
         metrics=enabled_metrics,
-        today_entries=today_entries
+        today_entries=today_entries,
+        daily_message=daily_message,
+        llm_available=llm.is_available(),
     )
 
 
@@ -83,7 +118,7 @@ def submit_entries(user_id):
             continue
         try:
             if metric.validate(value):
-                entry = metric.record(user_id, value, timestamp=timestamp)
+                metric.record(user_id, value, timestamp=timestamp)
                 results.append({
                     "metric": metric.name,
                     "success": True,
@@ -152,7 +187,10 @@ def new_user():
             flash("User already exists", "error")
             return render_template("new_user.html")
         user = user_repo.create(name)
-        user_repo.initialize_user_metrics(user.id, config.metrics.enabled_metrics)
+        user_repo.initialize_user_metrics(
+            user.id,
+            config.metrics.enabled_metrics,
+        )
         flash(f"Welcome, {user.name}!", "success")
         return redirect(url_for("user_dashboard", user_id=user.id))
     return render_template("new_user.html")
@@ -206,6 +244,59 @@ def api_metrics():
             for m in all_metrics
         ]
     })
+
+
+@app.route("/user/<int:user_id>/llm/ask", methods=["POST"])
+def llm_ask(user_id: int):
+    """Ask the LLM a question."""
+    user = user_repo.get_by_id(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    if not llm.is_available():
+        return jsonify({"error": "LLM service is not available"}), 503
+    question = request.json.get("question", "").strip()
+    if not question:
+        return jsonify({"error": "Question is required"}), 400
+    enabled_metric_names = user_repo.get_enabled_metrics(user_id)
+    enabled_metrics = REGISTRY.get_enabled(enabled_metric_names)
+    context_parts = []
+    for metric in enabled_metrics:
+        try:
+            agg = metric.get_aggregates(user_id, days=30)
+            if agg.stats.get("count", 0) > 0:
+                context_parts.append(f"- {metric.display_name}: {agg.summary}")
+        except Exception:
+            pass
+    context = (
+        "\n".join(context_parts)
+        if context_parts
+        else "No recent data available."
+    )
+    messages = [
+        LlmMessage(
+            role=Role.SYSTEM,
+            content=(
+                "You are a helpful health tracking assistant. Answer "
+                "questions about the user's metrics data. Be supportive "
+                "and objective. Keep answers brief."
+            ),
+        ),
+        LlmMessage(
+            role=Role.USER,
+            content=(
+                f"Here's my recent tracking data:\n{context}\n\n"
+                f"Question: {question}"
+            )
+        )
+    ]
+    try:
+        response = llm.custom_prompt(messages)
+        return jsonify({
+            "answer": response.content.strip(),
+            "metadata": response.metadata,
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
