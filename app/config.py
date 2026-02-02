@@ -16,7 +16,7 @@ class LlmConfig(BaseModel):
 
     provider: str = Field(default="ollama")
     ollama_host: str = Field(default="http://localhost:11434")
-    ollama_model: str = Field(default="mistral:latest")
+    ollama_model: str = Field(default="tinyllama")
     timeout_seconds: int = Field(default=30)
 
 

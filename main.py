@@ -1,5 +1,5 @@
 """
-Startup script for the Metrics Tracker web application.
+Startup script for the Compass web application.
 """
 
 import sys
@@ -12,7 +12,7 @@ from app.web.app import app, config
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("🚀 Starting Metrics Tracker")
+    print("Starting Compass...")
     print("=" * 60)
     print(f"Server: http://{config.web.host}:{config.web.port}")
     print(f"Database: {config.database.path}")
