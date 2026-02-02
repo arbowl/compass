@@ -31,7 +31,7 @@ class WebConfig(BaseModel):
 class MetricsConfig(BaseModel):
     """Metrics configuration"""
 
-    enabled_metrics: list[str]
+    enabled_metrics: list[str] = Field(default=["notes"])
 
 
 class AppConfig(BaseModel):

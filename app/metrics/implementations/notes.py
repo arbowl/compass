@@ -45,7 +45,7 @@ class NotesMetric(MetricBase):
 
     def input_schema(self):
         return MetricInputSchema(
-            value_type=_InputType.TEXT,
+            input_type=_InputType.TEXT,
             label="Any extra notes?",
             required=False,
             placeholder="How are you feeling? Any observations?"

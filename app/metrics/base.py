@@ -2,20 +2,20 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from enum import Enum, auto
+from enum import StrEnum
 from typing import Any, Optional
 
 from pydantic import BaseModel
 
 
-class _InputType(Enum):
+class _InputType(StrEnum):
     """Types of inputs for UI fields"""
 
-    BOOLEAN = auto()
-    DECIMAL = auto()
-    INTEGER = auto()
-    TEXT = auto()
-    SELECT = auto()
+    BOOLEAN = "boolean"
+    DECIMAL = "decimal"
+    INTEGER = "integer"
+    TEXT = "text"
+    SELECT = "select"
 
 
 class MetricInputSchema(BaseModel):
