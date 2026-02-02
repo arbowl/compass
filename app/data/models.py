@@ -36,10 +36,11 @@ class UserMetricConfig(BaseModel):
 
 class MetricEntryDb(BaseModel):
     """Database representation of a metric entry.
-    
+
     Note: This is different from MetricEntry in metrics.base,
     as this represents the database storage format.
     """
+
     id: Optional[int] = None
     user_id: int
     metric_name: str

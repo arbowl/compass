@@ -75,16 +75,14 @@ class MoodMetric(MetricBase):
     def get_trends(self, user_id, days):
         """Mood trend over time"""
         entries = self.entry_repo.get_for_user(
-            user_id=user_id,
-            metric_name=self.name,
-            days=days
+            user_id=user_id, metric_name=self.name, days=days
         )
         data_points = [
             {
                 "timestamp": entry.timestamp.isoformat(),
                 "value": self.MOOD_VALUES.get(entry.value_text, 3),
                 "date": entry.timestamp.strftime("%Y-%m-%d"),
-                "label": entry.value_text
+                "label": entry.value_text,
             }
             for entry in reversed(entries)
         ]
@@ -97,33 +95,27 @@ class MoodMetric(MetricBase):
 
     def get_aggregates(self, user_id, days):
         entries = self.entry_repo.get_for_user(
-            user_id=user_id,
-            metric_name=self.name,
-            days=days
+            user_id=user_id, metric_name=self.name, days=days
         )
         if not entries:
             return MetricAggregate(
                 metric_name=self.name,
                 time_range_days=days,
                 summary="No mood data recorded.",
-                stats={"count": 0}
+                stats={"count": 0},
             )
         mood_counts = {}
         for entry in entries:
             mood = entry.value_text
             mood_counts[mood] = mood_counts.get(mood, 0) + 1
         most_common = max(mood_counts.items(), key=lambda x: x[1])
-        mood_values = [
-            self.MOOD_VALUES.get(e.value_text, 3) for e in entries
-        ]
+        mood_values = [self.MOOD_VALUES.get(e.value_text, 3) for e in entries]
         avg_value = sum(mood_values) / len(mood_values)
         avg_mood = min(
-            self.MOOD_OPTIONS,
-            key=lambda m: abs(self.MOOD_VALUES[m] - avg_value)
+            self.MOOD_OPTIONS, key=lambda m: abs(self.MOOD_VALUES[m] - avg_value)
         )
         summary = (
-            f"Most common: {most_common[0]} ({most_common[1]}x) • "
-            f"Average: {avg_mood}"
+            f"Most common: {most_common[0]} ({most_common[1]}x) • Average: {avg_mood}"
         )
         return MetricAggregate(
             metric_name=self.name,
@@ -134,6 +126,6 @@ class MoodMetric(MetricBase):
                 "most_common": most_common[0],
                 "most_common_count": most_common[1],
                 "average_mood": avg_mood,
-                "distribution": mood_counts
-            }
+                "distribution": mood_counts,
+            },
         )

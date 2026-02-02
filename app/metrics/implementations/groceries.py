@@ -72,16 +72,14 @@ class GroceriesMetric(MetricBase):
     def get_trends(self, user_id, days):
         """Boolean trend over time"""
         entries = self.entry_repo.get_for_user(
-            user_id=user_id,
-            metric_name=self.name,
-            days=days
+            user_id=user_id, metric_name=self.name, days=days
         )
         data_points = [
             {
                 "timestamp": entry.timestamp.isoformat(),
                 "value": 1 if entry.value_text == "Yes" else 0,
                 "date": entry.timestamp.strftime("%Y-%m-%d"),
-                "label": entry.value_text
+                "label": entry.value_text,
             }
             for entry in reversed(entries)
         ]
@@ -94,24 +92,19 @@ class GroceriesMetric(MetricBase):
 
     def get_aggregates(self, user_id, days):
         entries = self.entry_repo.get_for_user(
-            user_id=user_id,
-            metric_name=self.name,
-            days=days
+            user_id=user_id, metric_name=self.name, days=days
         )
         if not entries:
             return MetricAggregate(
                 metric_name=self.name,
                 time_range_days=days,
                 summary="No grocery data recorded.",
-                stats={"count": 0, "yes_count": 0, "percentage": 0}
+                stats={"count": 0, "yes_count": 0, "percentage": 0},
             )
         yes_count = sum(1 for e in entries if e.value_text == "Yes")
         total_count = len(entries)
         percentage = (yes_count / total_count * 100) if total_count > 0 else 0
-        summary = (
-            f"{yes_count}/{total_count} weeks supported goals "
-            f"({percentage:.0f}%)"
-        )
+        summary = f"{yes_count}/{total_count} weeks supported goals ({percentage:.0f}%)"
         return MetricAggregate(
             metric_name=self.name,
             time_range_days=days,
@@ -120,6 +113,6 @@ class GroceriesMetric(MetricBase):
                 "count": total_count,
                 "yes_count": yes_count,
                 "no_count": total_count - yes_count,
-                "percentage": round(percentage, 1)
-            }
+                "percentage": round(percentage, 1),
+            },
         )

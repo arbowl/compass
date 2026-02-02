@@ -1,14 +1,6 @@
 """Flask web application for metrics tracker."""
 
-from flask import (
-    Flask,
-    render_template,
-    request,
-    redirect,
-    url_for,
-    jsonify,
-    flash
-)
+from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
 from datetime import datetime
 from pathlib import Path
 
@@ -119,23 +111,13 @@ def submit_entries(user_id):
         try:
             if metric.validate(value):
                 metric.record(user_id, value, timestamp=timestamp)
-                results.append({
-                    "metric": metric.name,
-                    "success": True,
-                    "value": value
-                })
+                results.append({"metric": metric.name, "success": True, "value": value})
             else:
-                results.append({
-                    "metric": metric.name,
-                    "success": False,
-                    "error": "Invalid value"
-                })
+                results.append(
+                    {"metric": metric.name, "success": False, "error": "Invalid value"}
+                )
         except Exception as e:
-            results.append({
-                "metric": metric.name,
-                "success": False,
-                "error": str(e)
-            })
+            results.append({"metric": metric.name, "success": False, "error": str(e)})
     success_count = sum(1 for r in results if r["success"])
     if success_count > 0:
         flash(f"Successfully logged {success_count} metric(s)!", "success")
@@ -159,19 +141,12 @@ def user_trends(user_id):
         try:
             aggregates = metric.get_aggregates(user_id, days)
             trends = metric.get_trends(user_id, days)
-            metric_data.append({
-                "metric": metric,
-                "aggregates": aggregates,
-                "trends": trends
-            })
+            metric_data.append(
+                {"metric": metric, "aggregates": aggregates, "trends": trends}
+            )
         except Exception as e:
             print(f"Error getting data for {metric.name}: {e}")
-    return render_template(
-        "trends.html",
-        user=user,
-        metric_data=metric_data,
-        days=days
-    )
+    return render_template("trends.html", user=user, metric_data=metric_data, days=days)
 
 
 @app.route("/users/new", methods=["GET", "POST"])
@@ -209,7 +184,7 @@ def user_settings(user_id):
         "settings.html",
         user=user,
         all_metrics=all_metrics,
-        enabled_metric_names=enabled_metric_names
+        enabled_metric_names=enabled_metric_names,
     )
 
 
@@ -233,17 +208,19 @@ def toggle_metric(user_id):
 def api_metrics():
     """API endpoint to get available metrics."""
     all_metrics = REGISTRY.get_all()
-    return jsonify({
-        "metrics": [
-            {
-                "name": m.name,
-                "display_name": m.display_name,
-                "description": m.description,
-                "input_schema": m.input_schema().model_dump()
-            }
-            for m in all_metrics
-        ]
-    })
+    return jsonify(
+        {
+            "metrics": [
+                {
+                    "name": m.name,
+                    "display_name": m.display_name,
+                    "description": m.description,
+                    "input_schema": m.input_schema().model_dump(),
+                }
+                for m in all_metrics
+            ]
+        }
+    )
 
 
 @app.route("/user/<int:user_id>/llm/ask", methods=["POST"])
@@ -267,11 +244,7 @@ def llm_ask(user_id: int):
                 context_parts.append(f"- {metric.display_name}: {agg.summary}")
         except Exception:
             pass
-    context = (
-        "\n".join(context_parts)
-        if context_parts
-        else "No recent data available."
-    )
+    context = "\n".join(context_parts) if context_parts else "No recent data available."
     messages = [
         LlmMessage(
             role=Role.SYSTEM,
@@ -284,24 +257,21 @@ def llm_ask(user_id: int):
         LlmMessage(
             role=Role.USER,
             content=(
-                f"Here's my recent tracking data:\n{context}\n\n"
-                f"Question: {question}"
-            )
-        )
+                f"Here's my recent tracking data:\n{context}\n\nQuestion: {question}"
+            ),
+        ),
     ]
     try:
         response = llm.custom_prompt(messages)
-        return jsonify({
-            "answer": response.content.strip(),
-            "metadata": response.metadata,
-        })
+        return jsonify(
+            {
+                "answer": response.content.strip(),
+                "metadata": response.metadata,
+            }
+        )
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
-    app.run(
-        host=config.web.host,
-        port=config.web.port,
-        debug=config.web.debug
-    )
+    app.run(host=config.web.host, port=config.web.port, debug=config.web.debug)

@@ -65,7 +65,7 @@ class MetricAggregate(BaseModel):
 
 class MetricBase(ABC):
     """Abstract base class for all metrics.
-    
+
     Each metric defines:
     - What input it accepts (via input_schema)
     - How to validate that input

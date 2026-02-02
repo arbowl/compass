@@ -37,9 +37,7 @@ class MetricRegistry:
     def get_enabled(self, enabled_names: list[str]) -> list[MetricBase]:
         """Get all enabled metric instances."""
         return [
-            self._instances[name]
-            for name in enabled_names
-            if name in self._instances
+            self._instances[name] for name in enabled_names if name in self._instances
         ]
 
     def is_registered(self, name: str) -> bool:

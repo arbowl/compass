@@ -7,16 +7,16 @@ from app.metrics.base import (
     MetricInputSchema,
     MetricEntry,
     MetricTrendData,
-    MetricAggregate
+    MetricAggregate,
 )
 from app.metrics.registry import REGISTRY
 
 
 __all__ = [
     "MetricBase",
-    "MetricInputSchema", 
+    "MetricInputSchema",
     "MetricEntry",
     "MetricTrendData",
     "MetricAggregate",
-    "REGISTRY"
+    "REGISTRY",
 ]

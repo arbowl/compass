@@ -88,9 +88,7 @@ class Database:
         finally:
             conn.close()
 
-    def execute(
-        self, query: str, params: Optional[tuple] = None
-    ) -> list[dict]:
+    def execute(self, query: str, params: Optional[tuple] = None) -> list[dict]:
         """Execute a query and return the results as a list of dictionaries"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -101,9 +99,7 @@ class Database:
             conn.commit()
             return [dict(row) for row in cursor.fetchall()]
 
-    def execute_one(
-        self, query: str, params: Optional[tuple] = None
-    ) -> Optional[dict]:
+    def execute_one(self, query: str, params: Optional[tuple] = None) -> Optional[dict]:
         """Execute a query and return a single result as a dictionary"""
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -115,9 +111,7 @@ class Database:
             row = cursor.fetchone()
             return dict(row) if row else None
 
-    def execute_insert(
-        self, query: str, params: Optional[tuple] = None
-    ) -> int:
+    def execute_insert(self, query: str, params: Optional[tuple] = None) -> int:
         """Execute an insert query and return the last inserted ID"""
         with self.get_connection() as conn:
             cursor = conn.cursor()

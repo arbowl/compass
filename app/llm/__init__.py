@@ -7,14 +7,14 @@ from app.llm.base import (
     LlmMessage,
     LlmResponse,
     DailySummaryRequest,
-    TrendAnalysisRequest
+    TrendAnalysisRequest,
 )
 
 
 __all__ = [
-    'LlmInterface',
-    'LlmMessage',
-    'LlmResponse',
-    'DailySummaryRequest',
-    'TrendAnalysisRequest'
+    "LlmInterface",
+    "LlmMessage",
+    "LlmResponse",
+    "DailySummaryRequest",
+    "TrendAnalysisRequest",
 ]

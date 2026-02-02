@@ -36,5 +36,5 @@ __all__ = [
     "ExerciseMetric",
     "AloneTimeMetric",
     "MoodMetric",
-    "register_all_metrics"
+    "register_all_metrics",
 ]

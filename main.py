@@ -10,7 +10,7 @@ sys.path.insert(0, str(project_root))
 
 from app.web.app import app, config
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("=" * 60)
     print("🚀 Starting Metrics Tracker")
     print("=" * 60)
@@ -19,9 +19,5 @@ if __name__ == '__main__':
     print(f"Debug mode: {config.web.debug}")
     print("=" * 60)
     print("\nPress Ctrl+C to stop\n")
-    
-    app.run(
-        host=config.web.host,
-        port=config.web.port,
-        debug=config.web.debug
-    )
+
+    app.run(host=config.web.host, port=config.web.port, debug=config.web.debug)

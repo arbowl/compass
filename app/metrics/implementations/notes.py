@@ -47,7 +47,7 @@ class NotesMetric(MetricBase):
             input_type=InputType.TEXT,
             label="Any extra notes?",
             required=False,
-            placeholder="How are you feeling? Any observations?"
+            placeholder="How are you feeling? Any observations?",
         )
 
     def validate(self, value: Any) -> bool:
@@ -75,22 +75,19 @@ class NotesMetric(MetricBase):
     def get_trends(self, user_id, days):
         """Notes as a timeline"""
         entries = self.entry_repo.get_for_user(
-            user_id=user_id,
-            metric_name=self.name,
-            days=days
+            user_id=user_id, metric_name=self.name, days=days
         )
         entries_with_content = [
-            e
-            for e in entries
-            if e.value_text and e.value_text.strip()
+            e for e in entries if e.value_text and e.value_text.strip()
         ]
         data_points = [
             {
                 "timestamp": entry.timestamp.isoformat(),
                 "value": entry.value_text,
                 "date": entry.timestamp.strftime("%Y-%m-%d"),
-                "preview": entry.value_text[:100]
-                + "..." if len(entry.value_text) > 100 else entry.value_text
+                "preview": entry.value_text[:100] + "..."
+                if len(entry.value_text) > 100
+                else entry.value_text,
             }
             for entry in reversed(entries_with_content)
         ]
@@ -103,39 +100,27 @@ class NotesMetric(MetricBase):
 
     def get_aggregates(self, user_id, days):
         entries = self.entry_repo.get_for_user(
-            user_id=user_id,
-            metric_name=self.name,
-            days=days
+            user_id=user_id, metric_name=self.name, days=days
         )
         entries_with_content = [
-            e
-            for e in entries
-            if e.value_text and e.value_text.strip()
+            e for e in entries if e.value_text and e.value_text.strip()
         ]
         if not entries_with_content:
             return MetricAggregate(
                 metric_name=self.name,
                 time_range_days=days,
                 summary="No notes recorded.",
-                stats={"count": 0, "total_words": 0}
+                stats={"count": 0, "total_words": 0},
             )
-        total_words = sum(
-            len(e.value_text.split()) for e in entries_with_content
-        )
+        total_words = sum(len(e.value_text.split()) for e in entries_with_content)
         avg_words = (
-            total_words / len(entries_with_content)
-            if entries_with_content
-            else 0
+            total_words / len(entries_with_content) if entries_with_content else 0
         )
         recent_note = entries_with_content[0].value_text
-        preview = (
-            recent_note[:50] + "..."
-            if len(recent_note) > 50
-            else recent_note
-        )
+        preview = recent_note[:50] + "..." if len(recent_note) > 50 else recent_note
         summary = (
             f"{len(entries_with_content)} notes • ~{avg_words:.0f} "
-            f"words/note • Latest: \"{preview}\""
+            f'words/note • Latest: "{preview}"'
         )
         return MetricAggregate(
             metric_name=self.name,
@@ -145,28 +130,26 @@ class NotesMetric(MetricBase):
                 "count": len(entries_with_content),
                 "total_words": total_words,
                 "avg_words_per_note": round(avg_words, 1),
-                "latest_preview": preview
-            }
+                "latest_preview": preview,
+            },
         )
 
     def llm_prompt(self, user_id, context=None) -> Optional[str]:
         """Generate LLM prompt for notes analysis."""
         entries = self.entry_repo.get_for_user(
-            user_id=user_id,
-            metric_name=self.name,
-            days=7
+            user_id=user_id, metric_name=self.name, days=7
         )
         entries_with_content = [
-            e
-            for e in entries
-            if e.value_text and e.value_text.strip()
+            e for e in entries if e.value_text and e.value_text.strip()
         ]
         if not entries_with_content:
             return None
-        recent_notes = "\n".join([
-            f"- {e.timestamp.strftime('%Y-%m-%d')}: {e.value_text}"
-            for e in reversed(entries_with_content[-5:])
-        ])
+        recent_notes = "\n".join(
+            [
+                f"- {e.timestamp.strftime('%Y-%m-%d')}: {e.value_text}"
+                for e in reversed(entries_with_content[-5:])
+            ]
+        )
         prompt = f"""Based on recent daily notes:
 {recent_notes}
 

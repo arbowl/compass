@@ -54,23 +54,17 @@ class LlmInterface(ABC):
     """
 
     @abstractmethod
-    def generate_daily_summary(
-        self, request: DailySummaryRequest
-    ) -> LlmResponse:
+    def generate_daily_summary(self, request: DailySummaryRequest) -> LlmResponse:
         """Generate a daily summary based on metrics data"""
         pass
 
     @abstractmethod
-    def analyze_trend(
-        self, request: TrendAnalysisRequest
-    ) -> LlmResponse:
+    def analyze_trend(self, request: TrendAnalysisRequest) -> LlmResponse:
         """Analyze a trend based on metric data"""
         pass
 
     @abstractmethod
-    def custom_prompt(
-        self, messages: list[LlmMessage]
-    ) -> LlmResponse:
+    def custom_prompt(self, messages: list[LlmMessage]) -> LlmResponse:
         """Generate a response to a custom prompt"""
         pass
 

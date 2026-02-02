@@ -1,5 +1,4 @@
-"""Data persistence layer for the metrics tracker.
-"""
+"""Data persistence layer for the metrics tracker."""
 
 from app.data.database import Database
 from app.data.models import User, UserMetricConfig, MetricEntryDb
@@ -13,5 +12,5 @@ __all__ = [
     "UserMetricConfig",
     "MetricEntryDb",
     "UserRepository",
-    "MetricEntryRepository"
+    "MetricEntryRepository",
 ]

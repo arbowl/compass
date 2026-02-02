@@ -35,9 +35,7 @@ class OllamaLlm(LlmInterface):
         if self._available is not None:
             return self._available
         try:
-            response = requests.get(
-                f"{self.host}/api/tags", timeout=5
-            )
+            response = requests.get(f"{self.host}/api/tags", timeout=5)
             self._available = response.status_code == 200
         except RequestException:
             self._available = False
@@ -73,7 +71,7 @@ class OllamaLlm(LlmInterface):
                     "options": {
                         "num_predict": max_tokens,
                         "temperature": 0.7,
-                    }
+                    },
                 },
                 timeout=self.timeout,
             )
@@ -92,7 +90,7 @@ class OllamaLlm(LlmInterface):
                 metadata={
                     "model": self.model,
                     "done": result.get("done", False),
-                }
+                },
             )
         except Timeout:
             return LlmResponse(
@@ -110,9 +108,7 @@ class OllamaLlm(LlmInterface):
                 metadata={"error": "unexpected_error"},
             )
 
-    def generate_daily_summary(
-        self, request: DailySummaryRequest
-    ) -> LlmResponse:
+    def generate_daily_summary(self, request: DailySummaryRequest) -> LlmResponse:
         """Generate a daily summary based on metrics data"""
         metrics_summary = self._format_metrics_data(request.metrics_data)
         messages = [
@@ -131,15 +127,12 @@ class OllamaLlm(LlmInterface):
                     f"Based on my recent tracking data:\n{metrics_summary}\n"
                     "\nGive me a brief, encouraging message for today "
                     "(1-2 sentences)."
-                )
+                ),
             ),
         ]
         return self._generate(messages, max_tokens=150)
 
-    def analyze_trend(
-        self,
-        request: TrendAnalysisRequest
-    ) -> LlmResponse:
+    def analyze_trend(self, request: TrendAnalysisRequest) -> LlmResponse:
         """Analyze a trend based on metric data"""
         trend_summary = self._format_trend_data(request.trend_data, indent=2)
         messages = [
@@ -158,22 +151,16 @@ class OllamaLlm(LlmInterface):
                     f"{request.metric_name}:\n{trend_summary}\n\n"
                     "What patterns do you notice? Keep it brief "
                     "(1-3 sentences)."
-                )
+                ),
             ),
         ]
         return self._generate(messages, max_tokens=300)
 
-    def custom_prompt(
-        self,
-        messages: list[LlmMessage]
-    ) -> LlmResponse:
+    def custom_prompt(self, messages: list[LlmMessage]) -> LlmResponse:
         """Generate a response to a custom prompt"""
         return self._generate(messages, max_tokens=500)
 
-    def _format_metrics_data(
-        self,
-        metrics_data: dict[str, Any]
-    ) -> str:
+    def _format_metrics_data(self, metrics_data: dict[str, Any]) -> str:
         """Format metrics data for the LLM"""
         if not metrics_data:
             return "No recent data available."

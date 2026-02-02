@@ -78,9 +78,7 @@ class AloneTimeMetric(MetricBase):
     def get_trends(self, user_id, days):
         """Hours trend over time"""
         entries = self.entry_repo.get_for_user(
-            user_id=user_id,
-            metric_name=self.name,
-            days=days
+            user_id=user_id, metric_name=self.name, days=days
         )
         data_points = [
             {
@@ -99,16 +97,14 @@ class AloneTimeMetric(MetricBase):
 
     def get_aggregates(self, user_id, days):
         entries = self.entry_repo.get_for_user(
-            user_id=user_id,
-            metric_name=self.name,
-            days=days
+            user_id=user_id, metric_name=self.name, days=days
         )
         if not entries:
             return MetricAggregate(
                 metric_name=self.name,
                 time_range_days=days,
                 summary="No alone time data recorded.",
-                stats={"count": 0}
+                stats={"count": 0},
             )
         values = [e.value_decimal for e in entries]
         total = sum(values)
@@ -129,6 +125,6 @@ class AloneTimeMetric(MetricBase):
                 "total": round(total, 1),
                 "average": round(avg, 1),
                 "min": round(min_val, 1),
-                "max": round(max_val, 1)
-            }
+                "max": round(max_val, 1),
+            },
         )
