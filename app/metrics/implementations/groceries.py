@@ -15,6 +15,9 @@ from app.metrics.base import (
     MetricTrendData,
 )
 
+YES = "Yes"
+NO = "No"
+
 
 class GroceriesMetric(MetricBase):
     """Track if groceries supported goals"""
@@ -47,12 +50,12 @@ class GroceriesMetric(MetricBase):
             input_type=InputType.SELECT,
             label="Did your groceries this week support your goals?",
             required=False,
-            options=["Yes", "No"],
+            options=[YES, NO],
         )
 
     def validate(self, value: Any) -> bool:
         """Validate yes/no input"""
-        return value in ["Yes", "No"]
+        return value in [YES, NO]
 
     def record(self, user_id, value, timestamp=None):
         db_entry = self.entry_repo.create_or_update(
@@ -77,7 +80,7 @@ class GroceriesMetric(MetricBase):
         data_points = [
             {
                 "timestamp": entry.timestamp.isoformat(),
-                "value": 1 if entry.value_text == "Yes" else 0,
+                "value": 1 if entry.value_text == YES else 0,
                 "date": entry.timestamp.strftime("%Y-%m-%d"),
                 "label": entry.value_text,
             }
@@ -101,7 +104,7 @@ class GroceriesMetric(MetricBase):
                 summary="No grocery data recorded.",
                 stats={"count": 0, "yes_count": 0, "percentage": 0},
             )
-        yes_count = sum(1 for e in entries if e.value_text == "Yes")
+        yes_count = sum(1 for e in entries if e.value_text == YES)
         total_count = len(entries)
         percentage = (yes_count / total_count * 100) if total_count > 0 else 0
         summary = f"{yes_count}/{total_count} weeks supported goals ({percentage:.0f}%)"

@@ -15,12 +15,18 @@ from app.metrics.base import (
     MetricTrendData,
 )
 
+GREAT = "Great"
+GOOD = "Good"
+OKAY = "Okay"
+POOR = "Poor"
+BAD = "Bad"
+
 
 class MoodMetric(MetricBase):
     """Track daily mood"""
 
-    MOOD_OPTIONS = ["Great", "Good", "Okay", "Poor", "Bad"]
-    MOOD_VALUES = {"Great": 5, "Good": 4, "Okay": 3, "Poor": 2, "Bad": 1}
+    MOOD_OPTIONS = [GREAT, GOOD, OKAY, POOR, BAD]
+    MOOD_VALUES = {GREAT: 5, GOOD: 4, OKAY: 3, POOR: 2, BAD: 1}
 
     def __init__(self, db: Optional[Database] = None) -> None:
         self.db = db
