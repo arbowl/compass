@@ -43,14 +43,25 @@ CREATE TABLE IF NOT EXISTS metric_entries (
 );
 
 -- Indexes for common queries
-CREATE INDEX IF NOT EXISTS idx_metric_entries_user_metric 
+CREATE INDEX IF NOT EXISTS idx_metric_entries_user_metric
     ON metric_entries(user_id, metric_name);
-    
-CREATE INDEX IF NOT EXISTS idx_metric_entries_timestamp 
+
+CREATE INDEX IF NOT EXISTS idx_metric_entries_timestamp
     ON metric_entries(timestamp);
-    
-CREATE INDEX IF NOT EXISTS idx_metric_entries_user_timestamp 
+
+CREATE INDEX IF NOT EXISTS idx_metric_entries_user_timestamp
     ON metric_entries(user_id, timestamp);
+
+-- Daily summary cache (LLM-generated summaries)
+CREATE TABLE IF NOT EXISTS daily_summary_cache (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    cache_date DATE NOT NULL,
+    summary_content TEXT NOT NULL,
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(user_id, cache_date)
+);
 """
 
 

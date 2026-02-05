@@ -1,11 +1,16 @@
 """Flask web application for metrics tracker."""
 
 from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
-from datetime import datetime
+from datetime import datetime, date
 from pathlib import Path
 
 from app.config import load_config
-from app.data import Database, UserRepository, MetricEntryRepository
+from app.data import (
+    Database,
+    UserRepository,
+    MetricEntryRepository,
+    SummaryCacheRepository,
+)
 from app.metrics.registry import REGISTRY
 from app.metrics.implementations import register_all_metrics
 from app.llm.ollama import OllamaLlm, DailySummaryRequest, LlmMessage, Role
@@ -19,6 +24,7 @@ db = Database(db_path)
 db.initialize()
 user_repo = UserRepository(db)
 entry_repo = MetricEntryRepository(db)
+summary_cache = SummaryCacheRepository(db)
 register_all_metrics(db)
 llm = OllamaLlm(
     host=config.llm.ollama_host,
@@ -58,7 +64,11 @@ def user_dashboard(user_id):
             if latest_entry.timestamp.date() == datetime.now().date():
                 today_entries[metric.name] = latest_entry.get_value()
     daily_message = None
-    if llm.is_available():
+    today = date.today()
+    cached = summary_cache.get_for_user_date(user_id, today)
+    if cached:
+        daily_message = cached.summary_content
+    elif llm.is_available():
         try:
             metrics_data = {}
             for metric in enabled_metrics:
@@ -78,6 +88,7 @@ def user_dashboard(user_id):
                 response = llm.generate_daily_summary(summary_request)
                 if response.content and "error" not in response.metadata:
                     daily_message = response.content.strip()
+                    summary_cache.create(user_id, today, daily_message)
         except Exception as e:
             print(f"Error generating daily summary: {e}")
     return render_template(

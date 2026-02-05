@@ -1,6 +1,6 @@
 """Pydantic models for database entities"""
 
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 
 from pydantic import BaseModel
@@ -66,3 +66,16 @@ class MetricEntryDb(BaseModel):
         elif self.value_type == InputType.TEXT:
             return self.value_text
         return None
+
+
+class DailySummaryCache(BaseModel):
+    """Cached daily LLM summary for a user."""
+
+    id: Optional[int] = None
+    user_id: int
+    cache_date: date
+    summary_content: str
+    generated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes: bool = True

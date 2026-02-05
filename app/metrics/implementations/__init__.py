@@ -14,6 +14,7 @@ from app.metrics.implementations.mood import MoodMetric
 from app.metrics.implementations.notes import NotesMetric
 from app.metrics.implementations.scale import ScaleMetric
 from app.metrics.registry import REGISTRY
+
 if TYPE_CHECKING:
     from app.metrics.base import MetricBase
 

@@ -182,3 +182,7 @@ cython_debug/
 
 # Project
 *.db
+
+# Claude
+CLAUDE.md
+nul
